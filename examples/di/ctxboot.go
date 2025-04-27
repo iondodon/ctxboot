@@ -5,21 +5,25 @@ package main
 import (
 	"github.com/iondodon/ctxboot"
 	"reflect"
+	"log"
+	
+	"github.com/iondodon/ctxboot/examples/di/database"
+	
 )
 
 func init() {
 	cc := ctxboot.Boot()
 	
-	if err := cc.SetComponent(reflect.TypeOf(&Database{}), &Database{}); err != nil {
-		panic(err)
+	if err := cc.SetComponent(reflect.TypeOf(&database.Database{}), &database.Database{}); err != nil {
+		log.Fatalf("Failed to register component %s: %v", "database.Database", err)
 	}
 	
 	if err := cc.SetComponent(reflect.TypeOf(&UserRepository{}), &UserRepository{}); err != nil {
-		panic(err)
+		log.Fatalf("Failed to register component %s: %v", "UserRepository", err)
 	}
 	
 	if err := cc.SetComponent(reflect.TypeOf(&UserService{}), &UserService{}); err != nil {
-		panic(err)
+		log.Fatalf("Failed to register component %s: %v", "UserService", err)
 	}
 	
 }

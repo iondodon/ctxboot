@@ -5,24 +5,14 @@ import (
 	"reflect"
 
 	"github.com/iondodon/ctxboot"
+	"github.com/iondodon/ctxboot/examples/di/database"
 )
-
-// Database handles database operations
-//
-//ctxboot:component
-type Database struct {
-	ConnectionString string
-}
-
-func (db *Database) Connect() {
-	db.ConnectionString = "connected"
-}
 
 // UserRepository handles user data access
 //
 //ctxboot:component
 type UserRepository struct {
-	DB *Database `ctxboot:"inject"`
+	DB *database.Database `ctxboot:"inject"`
 }
 
 func (r *UserRepository) GetUser(id string) string {
