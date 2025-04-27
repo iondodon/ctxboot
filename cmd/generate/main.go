@@ -122,7 +122,7 @@ func main() {
 	}
 
 	// Write generated code
-	outputFile := filepath.Join(packageDir, "components_gen.go")
+	outputFile := filepath.Join(packageDir, "ctxboot.go")
 	if err := os.WriteFile(outputFile, buf.Bytes(), 0644); err != nil {
 		log.Fatalf("Failed to write generated code: %v", err)
 	}
