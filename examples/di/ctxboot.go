@@ -7,9 +7,9 @@ import (
 	"reflect"
 	"log"
 	
-	"github.com/iondodon/ctxboot/examples/di/database"
+	database "github.com/iondodon/ctxboot/examples/di/database"
 	
-	"github.com/iondodon/ctxboot/examples/di/repository"
+	repository2 "github.com/iondodon/ctxboot/examples/di/repository"
 	
 )
 
@@ -28,9 +28,9 @@ func init() {
 		log.Fatalf("Failed to register component %s: %v", "UserService", err)
 	}
 	
-	// Register repository.UserRepository
-	if err := cc.SetComponent(reflect.TypeOf((*repository.UserRepository)(nil)), &repository.UserRepository{}); err != nil {
-		log.Fatalf("Failed to register component %s: %v", "repository.UserRepository", err)
+	// Register repository2.UserRepository
+	if err := cc.SetComponent(reflect.TypeOf((*repository2.UserRepository)(nil)), &repository2.UserRepository{}); err != nil {
+		log.Fatalf("Failed to register component %s: %v", "repository2.UserRepository", err)
 	}
 	
 	
