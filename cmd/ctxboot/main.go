@@ -115,6 +115,11 @@ func main() {
 				for _, spec := range genDecl.Specs {
 					if typeSpec, ok := spec.(*ast.TypeSpec); ok {
 						if hasComponentAnnotation(genDecl.Doc) {
+							// Check if component is exported
+							if !ast.IsExported(typeSpec.Name.Name) {
+								log.Fatalf("Component %s must be exported (start with capital letter)", typeSpec.Name.Name)
+							}
+
 							componentCount++
 							log.Printf("Found component: %s in file %s", typeSpec.Name.Name, path)
 

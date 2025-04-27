@@ -7,9 +7,9 @@ import (
 	"reflect"
 	"log"
 	
-	"github.com/iondodon/ctxboot/examples/di/database"
-	
 	"github.com/iondodon/ctxboot/examples/di/repository"
+	
+	"github.com/iondodon/ctxboot/examples/di/database"
 	
 )
 
