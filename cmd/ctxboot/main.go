@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -48,6 +47,7 @@ func main() {
 	}
 
 	packageDir := os.Args[1]
+	log.Printf("Starting scan from directory: %s", packageDir)
 	components := make([]Component, 0)
 	var packageName string
 
@@ -57,13 +57,23 @@ func main() {
 	// Walk through all subdirectories
 	err := filepath.Walk(packageDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
+			log.Printf("Error accessing path %s: %v", path, err)
 			return err
 		}
 
-		// Skip directories and non-Go files
-		if info.IsDir() || !strings.HasSuffix(path, ".go") {
+		// Log directory traversal
+		if info.IsDir() {
+			log.Printf("Entering directory: %s", path)
 			return nil
 		}
+
+		// Skip non-Go files
+		if !strings.HasSuffix(path, ".go") {
+			log.Printf("Skipping non-Go file: %s", path)
+			return nil
+		}
+
+		log.Printf("Processing Go file: %s", path)
 
 		// Parse the Go file
 		file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
@@ -75,17 +85,23 @@ func main() {
 		// Use the first package name we find
 		if packageName == "" {
 			packageName = file.Name.Name
+			log.Printf("Found package name: %s", packageName)
 		}
 
 		// Find components in the file
+		componentCount := 0
 		for _, decl := range file.Decls {
 			if genDecl, ok := decl.(*ast.GenDecl); ok {
 				for _, spec := range genDecl.Specs {
 					if typeSpec, ok := spec.(*ast.TypeSpec); ok {
 						if hasComponentAnnotation(genDecl.Doc) {
+							componentCount++
+							log.Printf("Found component: %s in file %s", typeSpec.Name.Name, path)
+
 							// Get struct type
 							structType, ok := typeSpec.Type.(*ast.StructType)
 							if !ok {
+								log.Printf("Warning: %s is not a struct type", typeSpec.Name.Name)
 								continue
 							}
 
@@ -105,6 +121,9 @@ func main() {
 									}
 								}
 							}
+							if len(deps) > 0 {
+								log.Printf("Component %s has dependencies: %v", typeSpec.Name.Name, deps)
+							}
 
 							components = append(components, Component{
 								Name:         typeSpec.Name.Name,
@@ -114,6 +133,9 @@ func main() {
 					}
 				}
 			}
+		}
+		if componentCount > 0 {
+			log.Printf("Found %d components in file %s", componentCount, path)
 		}
 
 		return nil
@@ -127,8 +149,11 @@ func main() {
 		log.Fatal("No Go files found in the specified directory")
 	}
 
+	log.Printf("Total components found: %d", len(components))
+
 	// Sort components by dependencies
 	sortedComponents := sortByDependencies(components)
+	log.Printf("Sorted components: %v", sortedComponents)
 
 	// Generate registration code
 	info := ComponentInfo{
@@ -152,7 +177,7 @@ func main() {
 		log.Fatalf("Failed to write generated code: %v", err)
 	}
 
-	fmt.Printf("Generated registration code in %s\n", outputFile)
+	log.Printf("Successfully generated registration code in %s", outputFile)
 }
 
 func sortByDependencies(components []Component) []string {
