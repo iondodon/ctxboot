@@ -63,17 +63,16 @@ func main() {
 
 		// Log directory traversal
 		if info.IsDir() {
-			log.Printf("Entering directory: %s", path)
+			log.Printf("Checking directory: %s", path)
 			return nil
 		}
 
 		// Skip non-Go files
 		if !strings.HasSuffix(path, ".go") {
-			log.Printf("Skipping non-Go file: %s", path)
 			return nil
 		}
 
-		log.Printf("Processing Go file: %s", path)
+		log.Printf("Scanning file: %s", path)
 
 		// Parse the Go file
 		file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
@@ -134,7 +133,9 @@ func main() {
 				}
 			}
 		}
-		if componentCount > 0 {
+		if componentCount == 0 {
+			log.Printf("No components found in file %s", path)
+		} else {
 			log.Printf("Found %d components in file %s", componentCount, path)
 		}
 
