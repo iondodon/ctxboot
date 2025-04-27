@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"go/ast"
 	"go/parser"
 	"go/token"
@@ -52,12 +53,28 @@ type ComponentInfo struct {
 type Component struct {
 	Name         string
 	Package      string
+	File         string
 	Dependencies []Dependency
 }
 
 type Dependency struct {
 	Name    string
 	Package string
+	File    string
+}
+
+// Find module root by looking for go.mod
+func findModuleRoot(dir string) (string, error) {
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir, nil
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return "", fmt.Errorf("go.mod not found")
+		}
+		dir = parent
+	}
 }
 
 func main() {
@@ -144,12 +161,14 @@ func main() {
 												deps = append(deps, Dependency{
 													Name:    x.Name,
 													Package: file.Name.Name,
+													File:    path,
 												})
 											case *ast.SelectorExpr:
 												if pkg, ok := x.X.(*ast.Ident); ok {
 													deps = append(deps, Dependency{
 														Name:    x.Sel.Name,
 														Package: pkg.Name,
+														File:    path,
 													})
 												}
 											}
@@ -164,6 +183,7 @@ func main() {
 							components = append(components, Component{
 								Name:         typeSpec.Name.Name,
 								Package:      file.Name.Name,
+								File:         path,
 								Dependencies: deps,
 							})
 						}
@@ -194,8 +214,15 @@ func main() {
 	sortedComponents := sortByDependencies(components)
 	log.Printf("Sorted components: %v", sortedComponents)
 
-	// Read go.mod to get module path
-	modData, err := os.ReadFile(filepath.Join(packageDir, "go.mod"))
+	// Find module root
+	moduleRoot, err := findModuleRoot(packageDir)
+	if err != nil {
+		log.Fatalf("Failed to find module root: %v", err)
+	}
+	log.Printf("Found module root: %s", moduleRoot)
+
+	// Read go.mod from module root
+	modData, err := os.ReadFile(filepath.Join(moduleRoot, "go.mod"))
 	if err != nil {
 		log.Fatalf("Failed to read go.mod: %v", err)
 	}
@@ -205,11 +232,29 @@ func main() {
 	imports := make(map[string]bool)
 	for _, comp := range components {
 		if comp.Package != "main" {
-			imports[filepath.Join(modulePath, comp.Package)] = true
+			// Get the relative path from module root to the package
+			relPath, err := filepath.Rel(moduleRoot, filepath.Dir(comp.File))
+			if err != nil {
+				log.Fatalf("Failed to get relative path: %v", err)
+			}
+			// Skip if the path is the module root itself
+			if relPath != "." {
+				importPath := filepath.Join(modulePath, relPath)
+				imports[importPath] = true
+			}
 		}
 		for _, dep := range comp.Dependencies {
 			if dep.Package != "main" {
-				imports[filepath.Join(modulePath, dep.Package)] = true
+				// Get the relative path from module root to the package
+				relPath, err := filepath.Rel(moduleRoot, filepath.Dir(dep.File))
+				if err != nil {
+					log.Fatalf("Failed to get relative path: %v", err)
+				}
+				// Skip if the path is the module root itself
+				if relPath != "." {
+					importPath := filepath.Join(modulePath, relPath)
+					imports[importPath] = true
+				}
 			}
 		}
 	}
