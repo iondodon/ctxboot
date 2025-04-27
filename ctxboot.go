@@ -99,13 +99,17 @@ func (cc *ComponentContext) injectDependencies(target interface{}) error {
 	for i := 0; i < typ.NumField(); i++ {
 		field := typ.Field(i)
 		if tag := field.Tag.Get("ctxboot"); tag == "inject" {
-			// Get the pointer type for the field
+			// Get the type for the field
 			fieldType := field.Type
-			if fieldType.Kind() != reflect.Ptr {
-				fieldType = reflect.PtrTo(fieldType)
+			isPtrField := fieldType.Kind() == reflect.Ptr
+
+			// If field is not a pointer, we need to get the pointer type to look up the component
+			lookupType := fieldType
+			if !isPtrField {
+				lookupType = reflect.PtrTo(fieldType)
 			}
 
-			component, err := cc.GetComponent(fieldType)
+			component, err := cc.GetComponent(lookupType)
 			if err != nil {
 				return fmt.Errorf("failed to inject field %s: %w", field.Name, err)
 			}
@@ -116,10 +120,14 @@ func (cc *ComponentContext) injectDependencies(target interface{}) error {
 				fieldVal = reflect.NewAt(field.Type, unsafe.Pointer(fieldVal.UnsafeAddr())).Elem()
 			}
 
+			// If field is not a pointer, dereference the component
+			if !isPtrField {
+				component = reflect.ValueOf(component).Elem().Interface()
+			}
+
 			fieldVal.Set(reflect.ValueOf(component))
 		}
 	}
-
 	return nil
 }
 

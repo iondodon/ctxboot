@@ -316,14 +316,18 @@ func main() {
 		ModulePath: modulePath,
 	}
 
-	// Copy components with aliases
+	// Copy components with aliases for pointer fields
 	for i, comp := range components {
+		// Get the alias for this component's package
+		compPath := filepath.ToSlash(filepath.Join(modulePath, filepath.Dir(comp.File)))
+		alias := imports[compPath]
+
 		info.Components[i] = Component{
 			Name:         comp.Name,
 			Package:      comp.Package,
 			File:         comp.File,
 			Dependencies: comp.Dependencies,
-			Alias:        imports[filepath.ToSlash(filepath.Join(modulePath, filepath.Dir(comp.File)))],
+			Alias:        alias,
 		}
 	}
 
