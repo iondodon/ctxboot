@@ -51,55 +51,80 @@ func main() {
 	components := make([]Component, 0)
 	var packageName string
 
-	// Parse the package directory
+	// Create a new token.FileSet to hold all parsed files
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, packageDir, nil, parser.ParseComments)
-	if err != nil {
-		log.Fatalf("Failed to parse package: %v", err)
-	}
 
-	// Find components in each file
-	for _, pkg := range pkgs {
-		packageName = pkg.Name // Use the package name from the source
-		for _, file := range pkg.Files {
-			for _, decl := range file.Decls {
-				if genDecl, ok := decl.(*ast.GenDecl); ok {
-					for _, spec := range genDecl.Specs {
-						if typeSpec, ok := spec.(*ast.TypeSpec); ok {
-							if hasComponentAnnotation(genDecl.Doc) {
-								// Get struct type
-								structType, ok := typeSpec.Type.(*ast.StructType)
-								if !ok {
-									continue
-								}
+	// Walk through all subdirectories
+	err := filepath.Walk(packageDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
 
-								// Get dependencies
-								deps := make([]string, 0)
-								for _, field := range structType.Fields.List {
-									if field.Tag != nil {
-										tag := strings.Trim(field.Tag.Value, "`")
-										if strings.Contains(tag, `ctxboot:"inject"`) {
-											// Get field type name
-											switch t := field.Type.(type) {
-											case *ast.StarExpr:
-												if ident, ok := t.X.(*ast.Ident); ok {
-													deps = append(deps, ident.Name)
-												}
+		// Skip directories and non-Go files
+		if info.IsDir() || !strings.HasSuffix(path, ".go") {
+			return nil
+		}
+
+		// Parse the Go file
+		file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
+		if err != nil {
+			log.Printf("Warning: Failed to parse file %s: %v", path, err)
+			return nil
+		}
+
+		// Use the first package name we find
+		if packageName == "" {
+			packageName = file.Name.Name
+		}
+
+		// Find components in the file
+		for _, decl := range file.Decls {
+			if genDecl, ok := decl.(*ast.GenDecl); ok {
+				for _, spec := range genDecl.Specs {
+					if typeSpec, ok := spec.(*ast.TypeSpec); ok {
+						if hasComponentAnnotation(genDecl.Doc) {
+							// Get struct type
+							structType, ok := typeSpec.Type.(*ast.StructType)
+							if !ok {
+								continue
+							}
+
+							// Get dependencies
+							deps := make([]string, 0)
+							for _, field := range structType.Fields.List {
+								if field.Tag != nil {
+									tag := strings.Trim(field.Tag.Value, "`")
+									if strings.Contains(tag, `ctxboot:"inject"`) {
+										// Get field type name
+										switch t := field.Type.(type) {
+										case *ast.StarExpr:
+											if ident, ok := t.X.(*ast.Ident); ok {
+												deps = append(deps, ident.Name)
 											}
 										}
 									}
 								}
-
-								components = append(components, Component{
-									Name:         typeSpec.Name.Name,
-									Dependencies: deps,
-								})
 							}
+
+							components = append(components, Component{
+								Name:         typeSpec.Name.Name,
+								Dependencies: deps,
+							})
 						}
 					}
 				}
 			}
 		}
+
+		return nil
+	})
+
+	if err != nil {
+		log.Fatalf("Failed to walk directory: %v", err)
+	}
+
+	if packageName == "" {
+		log.Fatal("No Go files found in the specified directory")
 	}
 
 	// Sort components by dependencies
