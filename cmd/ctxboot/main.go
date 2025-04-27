@@ -9,6 +9,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"text/template"
 )
@@ -239,7 +240,9 @@ func main() {
 			}
 			// Skip if the path is the module root itself
 			if relPath != "." {
-				importPath := filepath.Join(modulePath, relPath)
+				// Normalize the path to use forward slashes
+				normalizedPath := filepath.ToSlash(relPath)
+				importPath := filepath.ToSlash(filepath.Join(modulePath, normalizedPath))
 				imports[importPath] = true
 			}
 		}
@@ -252,18 +255,21 @@ func main() {
 				}
 				// Skip if the path is the module root itself
 				if relPath != "." {
-					importPath := filepath.Join(modulePath, relPath)
+					// Normalize the path to use forward slashes
+					normalizedPath := filepath.ToSlash(relPath)
+					importPath := filepath.ToSlash(filepath.Join(modulePath, normalizedPath))
 					imports[importPath] = true
 				}
 			}
 		}
 	}
 
-	// Convert imports map to slice
+	// Convert imports map to slice and sort
 	importsSlice := make([]string, 0, len(imports))
 	for imp := range imports {
 		importsSlice = append(importsSlice, imp)
 	}
+	sort.Strings(importsSlice)
 
 	// Generate registration code
 	info := ComponentInfo{
