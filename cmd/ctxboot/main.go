@@ -27,11 +27,19 @@ import (
 
 func init() {
 	cc := ctxboot.Boot()
+	
+	// Register components in dependency order
 	{{range .Components}}
-	if err := cc.SetComponent(reflect.TypeOf(&{{if ne .Package "main"}}{{.Package}}.{{end}}{{.Name}}{}), &{{if ne .Package "main"}}{{.Package}}.{{end}}{{.Name}}{}); err != nil {
+	// Register {{if ne .Package "main"}}{{.Package}}.{{end}}{{.Name}}
+	if err := cc.SetComponent(reflect.TypeOf((*{{if ne .Package "main"}}{{.Package}}.{{end}}{{.Name}})(nil)), &{{if ne .Package "main"}}{{.Package}}.{{end}}{{.Name}}{}); err != nil {
 		log.Fatalf("Failed to register component %s: %v", "{{if ne .Package "main"}}{{.Package}}.{{end}}{{.Name}}", err)
 	}
 	{{end}}
+	
+	// Initialize all components after registration
+	if err := cc.InitializeComponents(); err != nil {
+		log.Fatalf("Failed to initialize components: %v", err)
+	}
 }
 `
 
@@ -126,11 +134,19 @@ func main() {
 										// Get field type name
 										switch t := field.Type.(type) {
 										case *ast.StarExpr:
-											if ident, ok := t.X.(*ast.Ident); ok {
+											switch x := t.X.(type) {
+											case *ast.Ident:
 												deps = append(deps, Dependency{
-													Name:    ident.Name,
+													Name:    x.Name,
 													Package: file.Name.Name,
 												})
+											case *ast.SelectorExpr:
+												if pkg, ok := x.X.(*ast.Ident); ok {
+													deps = append(deps, Dependency{
+														Name:    x.Sel.Name,
+														Package: pkg.Name,
+													})
+												}
 											}
 										}
 									}
@@ -225,35 +241,60 @@ func main() {
 	log.Printf("Successfully generated registration code in %s", outputFile)
 }
 
-func sortByDependencies(components []Component) []string {
-	// Create dependency graph
+func sortByDependencies(components []Component) []Component {
+	// Create dependency graph with fully qualified names
 	graph := make(map[string][]string)
+	nameToComp := make(map[string]Component)
+
 	for _, c := range components {
-		graph[c.Name] = make([]string, len(c.Dependencies))
-		for i, dep := range c.Dependencies {
-			graph[c.Name][i] = dep.Name
+		fullName := c.Name
+		if c.Package != "main" {
+			fullName = c.Package + "." + c.Name
 		}
+		nameToComp[fullName] = c
+
+		deps := make([]string, len(c.Dependencies))
+		for i, dep := range c.Dependencies {
+			deps[i] = dep.Package + "." + dep.Name
+		}
+		graph[fullName] = deps
 	}
 
 	// Perform topological sort
 	visited := make(map[string]bool)
-	sorted := make([]string, 0)
+	temp := make(map[string]bool)
+	sorted := make([]Component, 0)
 
-	var visit func(name string)
-	visit = func(name string) {
-		if visited[name] {
-			return
+	var visit func(name string) bool
+	visit = func(name string) bool {
+		if temp[name] {
+			return false // Cycle detected
 		}
-		visited[name] = true
+		if visited[name] {
+			return true
+		}
+		temp[name] = true
 
 		for _, dep := range graph[name] {
-			visit(dep)
+			if !visit(dep) {
+				return false
+			}
 		}
-		sorted = append(sorted, name)
+
+		delete(temp, name)
+		visited[name] = true
+		sorted = append(sorted, nameToComp[name])
+		return true
 	}
 
 	for _, c := range components {
-		visit(c.Name)
+		fullName := c.Name
+		if c.Package != "main" {
+			fullName = c.Package + "." + c.Name
+		}
+		if !visit(fullName) {
+			log.Fatalf("Cyclic dependency detected involving component %s", fullName)
+		}
 	}
 
 	return sorted

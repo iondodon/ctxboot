@@ -54,17 +54,29 @@ func (cc *ComponentContext) SetComponent(typ reflect.Type, instance interface{})
 		return fmt.Errorf("instance type %v is not assignable to %v", reflect.TypeOf(instance), typ)
 	}
 
-	// Store the component first to handle circular dependencies
+	// Store the component
 	cc.mu.Lock()
 	cc.components[typ] = instance
 	cc.mu.Unlock()
 
-	// Initialize the component
-	if err := cc.injectDependencies(instance); err != nil {
-		cc.mu.Lock()
-		delete(cc.components, typ) // Rollback on error
-		cc.mu.Unlock()
-		return fmt.Errorf("failed to inject dependencies: %v", err)
+	return nil
+}
+
+// InitializeComponents injects dependencies into all registered components
+func (cc *ComponentContext) InitializeComponents() error {
+	// Create a copy of components to avoid concurrent modification
+	components := make(map[reflect.Type]interface{})
+	cc.mu.RLock()
+	for typ, comp := range cc.components {
+		components[typ] = comp
+	}
+	cc.mu.RUnlock()
+
+	// Initialize each component
+	for typ, instance := range components {
+		if err := cc.injectDependencies(instance); err != nil {
+			return fmt.Errorf("failed to initialize component %v: %w", typ, err)
+		}
 	}
 
 	return nil
@@ -86,7 +98,13 @@ func (cc *ComponentContext) injectDependencies(target interface{}) error {
 	for i := 0; i < typ.NumField(); i++ {
 		field := typ.Field(i)
 		if tag := field.Tag.Get("ctxboot"); tag == "inject" {
-			component, err := cc.GetComponent(field.Type)
+			// Get the pointer type for the field
+			fieldType := field.Type
+			if fieldType.Kind() != reflect.Ptr {
+				fieldType = reflect.PtrTo(fieldType)
+			}
+
+			component, err := cc.GetComponent(fieldType)
 			if err != nil {
 				return fmt.Errorf("failed to inject field %s: %w", field.Name, err)
 			}
