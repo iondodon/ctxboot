@@ -120,12 +120,15 @@ func (cc *ComponentContext) injectDependencies(target interface{}) error {
 				fieldVal = reflect.NewAt(field.Type, unsafe.Pointer(fieldVal.UnsafeAddr())).Elem()
 			}
 
-			// If field is not a pointer, dereference the component
+			// Convert component to the correct type
+			compVal := reflect.ValueOf(component)
 			if !isPtrField {
-				component = reflect.ValueOf(component).Elem().Interface()
+				// If field is not a pointer, dereference the component
+				compVal = compVal.Elem()
 			}
 
-			fieldVal.Set(reflect.ValueOf(component))
+			// Set the value
+			fieldVal.Set(compVal)
 		}
 	}
 	return nil
