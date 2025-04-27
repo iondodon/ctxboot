@@ -49,6 +49,7 @@ type ComponentInfo struct {
 	Package    string
 	Components []Component
 	Imports    []string
+	ModulePath string
 }
 
 type Component struct {
@@ -242,6 +243,7 @@ func main() {
 			if relPath != "." {
 				// Normalize the path to use forward slashes
 				normalizedPath := filepath.ToSlash(relPath)
+				// Use the full module path for imports
 				importPath := filepath.ToSlash(filepath.Join(modulePath, normalizedPath))
 				imports[importPath] = true
 			}
@@ -257,6 +259,7 @@ func main() {
 				if relPath != "." {
 					// Normalize the path to use forward slashes
 					normalizedPath := filepath.ToSlash(relPath)
+					// Use the full module path for imports
 					importPath := filepath.ToSlash(filepath.Join(modulePath, normalizedPath))
 					imports[importPath] = true
 				}
@@ -276,6 +279,7 @@ func main() {
 		Package:    packageName,
 		Components: components,
 		Imports:    importsSlice,
+		ModulePath: modulePath,
 	}
 
 	tmpl, err := template.New("registration").Parse(registrationTemplate)
