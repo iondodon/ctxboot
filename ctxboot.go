@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"reflect"
 	"sync"
+	"unsafe"
 )
 
 var (
@@ -111,7 +112,8 @@ func (cc *ComponentContext) injectDependencies(target interface{}) error {
 
 			fieldVal := elem.Field(i)
 			if !fieldVal.CanSet() {
-				return fmt.Errorf("cannot set field %s", field.Name)
+				// Handle unexported field
+				fieldVal = reflect.NewAt(field.Type, unsafe.Pointer(fieldVal.UnsafeAddr())).Elem()
 			}
 
 			fieldVal.Set(reflect.ValueOf(component))
