@@ -63,11 +63,6 @@ func init() {
 		log.Fatalf("Failed to register component %s: %v", "{{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}}", err)
 	}
 	{{end}}
-	
-	// Initialize all components after registration
-	if err := cc.InitializeComponents(); err != nil {
-		log.Fatalf("Failed to initialize components: %v", err)
-	}
 }
 `
 
