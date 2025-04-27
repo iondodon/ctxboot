@@ -232,6 +232,8 @@ func main() {
 
 	// Collect unique imports
 	imports := make(map[string]bool)
+	seenPaths := make(map[string]bool) // Track seen paths to avoid duplicates
+
 	for _, comp := range components {
 		if comp.Package != "main" {
 			// Get the relative path from module root to the package
@@ -245,7 +247,12 @@ func main() {
 				normalizedPath := filepath.ToSlash(relPath)
 				// Use the full module path for imports
 				importPath := filepath.ToSlash(filepath.Join(modulePath, normalizedPath))
-				imports[importPath] = true
+
+				// Check if we've already seen this path
+				if !seenPaths[normalizedPath] {
+					imports[importPath] = true
+					seenPaths[normalizedPath] = true
+				}
 			}
 		}
 		for _, dep := range comp.Dependencies {
@@ -261,7 +268,12 @@ func main() {
 					normalizedPath := filepath.ToSlash(relPath)
 					// Use the full module path for imports
 					importPath := filepath.ToSlash(filepath.Join(modulePath, normalizedPath))
-					imports[importPath] = true
+
+					// Check if we've already seen this path
+					if !seenPaths[normalizedPath] {
+						imports[importPath] = true
+						seenPaths[normalizedPath] = true
+					}
 				}
 			}
 		}
