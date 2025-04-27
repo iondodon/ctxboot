@@ -42,6 +42,8 @@ type Component struct {
 }
 
 func main() {
+	log.Println("Starting ctxboot code generation tool...")
+
 	if len(os.Args) != 2 {
 		log.Fatal("Usage: generate <package-dir>")
 	}
