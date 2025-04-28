@@ -1,12 +1,22 @@
 package database
 
-// Database handles database operations
+// Database interface defines database operations
+type Database interface {
+	Connect()
+	GetConnectionString() string
+}
+
+// DatabaseImpl handles database operations
 //
 //ctxboot:component
-type Database struct {
+type DatabaseImpl struct {
 	ConnectionString string
 }
 
-func (db *Database) Connect() {
+func (db *DatabaseImpl) Connect() {
 	db.ConnectionString = "connected"
+}
+
+func (db *DatabaseImpl) GetConnectionString() string {
+	return db.ConnectionString
 }

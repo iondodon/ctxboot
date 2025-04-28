@@ -10,12 +10,12 @@ import (
 //
 //ctxboot:component
 type UserRepository struct {
-	db *database.Database `ctxboot:"inject"`
+	db database.Database `ctxboot:"inject"`
 }
 
 func (r *UserRepository) GetUser(id string) string {
-	if r.db.ConnectionString == "" {
+	if r.db.GetConnectionString() == "" {
 		r.db.Connect()
 	}
-	return fmt.Sprintf("User %s from DB: %s", id, r.db.ConnectionString)
+	return fmt.Sprintf("User %s from %T: %s", id, r.db, r.db.GetConnectionString())
 }

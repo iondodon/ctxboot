@@ -9,7 +9,7 @@ import (
 	
 	database "github.com/iondodon/ctxboot/examples/di/database"
 	
-	repository2 "github.com/iondodon/ctxboot/examples/di/repository"
+	repository "github.com/iondodon/ctxboot/examples/di/repository"
 	
 )
 
@@ -17,9 +17,9 @@ import (
 func LoadContext(cc *ctxboot.ComponentContext) error {
 	// Register components in dependency order
 	
-	// Register database.Database
-	if err := cc.SetComponent(reflect.TypeOf((*database.Database)(nil)), &database.Database{}); err != nil {
-		log.Fatalf("Failed to register component %s: %v", "database.Database", err)
+	// Register database.DatabaseImpl
+	if err := cc.SetComponent(reflect.TypeOf((*database.DatabaseImpl)(nil)), &database.DatabaseImpl{}); err != nil {
+		log.Fatalf("Failed to register component %s: %v", "database.DatabaseImpl", err)
 	}
 	
 	// Register UserService
@@ -27,9 +27,9 @@ func LoadContext(cc *ctxboot.ComponentContext) error {
 		log.Fatalf("Failed to register component %s: %v", "UserService", err)
 	}
 	
-	// Register repository2.UserRepository
-	if err := cc.SetComponent(reflect.TypeOf((*repository2.UserRepository)(nil)), &repository2.UserRepository{}); err != nil {
-		log.Fatalf("Failed to register component %s: %v", "repository2.UserRepository", err)
+	// Register repository.UserRepository
+	if err := cc.SetComponent(reflect.TypeOf((*repository.UserRepository)(nil)), &repository.UserRepository{}); err != nil {
+		log.Fatalf("Failed to register component %s: %v", "repository.UserRepository", err)
 	}
 	
 	
