@@ -250,3 +250,43 @@ func MustRegister(component interface{}) {
 		panic(fmt.Sprintf("failed to register component: %v", err))
 	}
 }
+
+// GetComponentByInterface retrieves a component that implements the given interface type
+func (cc *ComponentContext) GetComponentByInterface(interfaceType reflect.Type) (interface{}, error) {
+	if interfaceType.Kind() != reflect.Interface {
+		return nil, fmt.Errorf("type must be an interface, got: %v", interfaceType)
+	}
+
+	cc.mu.RLock()
+	defer cc.mu.RUnlock()
+
+	var candidates []reflect.Type
+	for t := range cc.components {
+		// Check if the component type implements the interface
+		if t.Implements(interfaceType) {
+			candidates = append(candidates, t)
+		}
+	}
+
+	// If no candidates found, return error
+	if len(candidates) == 0 {
+		return nil, fmt.Errorf("no component found that implements interface: %v", interfaceType)
+	}
+
+	// If multiple candidates found, panic
+	if len(candidates) > 1 {
+		panic(fmt.Sprintf("multiple components implement interface %v: %v", interfaceType, candidates))
+	}
+
+	// Return the single candidate
+	return cc.components[candidates[0]], nil
+}
+
+// MustGetComponentByInterface is like GetComponentByInterface but panics on error
+func (cc *ComponentContext) MustGetComponentByInterface(interfaceType reflect.Type) interface{} {
+	component, err := cc.GetComponentByInterface(interfaceType)
+	if err != nil {
+		panic(err)
+	}
+	return component
+}

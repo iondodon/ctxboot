@@ -7,7 +7,7 @@ import (
 	"reflect"
 	"log"
 	
-	database2 "github.com/iondodon/ctxboot/examples/di/database"
+	database "github.com/iondodon/ctxboot/examples/di/database"
 	
 	repository "github.com/iondodon/ctxboot/examples/di/repository"
 	
@@ -17,14 +17,9 @@ import (
 func LoadContext(cc *ctxboot.ComponentContext) error {
 	// Register components in dependency order
 	
-	// Register database2.DatabaseImpl
-	if err := cc.SetComponent(reflect.TypeOf((*database2.DatabaseImpl)(nil)), &database2.DatabaseImpl{}); err != nil {
-		log.Fatalf("Failed to register component %s: %v", "database2.DatabaseImpl", err)
-	}
-	
-	// Register database2.PostgresDatabase
-	if err := cc.SetComponent(reflect.TypeOf((*database2.PostgresDatabase)(nil)), &database2.PostgresDatabase{}); err != nil {
-		log.Fatalf("Failed to register component %s: %v", "database2.PostgresDatabase", err)
+	// Register database.DatabaseImpl
+	if err := cc.SetComponent(reflect.TypeOf((*database.DatabaseImpl)(nil)), &database.DatabaseImpl{}); err != nil {
+		log.Fatalf("Failed to register component %s: %v", "database.DatabaseImpl", err)
 	}
 	
 	// Register UserService

@@ -5,6 +5,7 @@ import (
 	"reflect"
 
 	"github.com/iondodon/ctxboot"
+	"github.com/iondodon/ctxboot/examples/di/database"
 	"github.com/iondodon/ctxboot/examples/di/repository"
 )
 
@@ -35,4 +36,15 @@ func main() {
 	// Use service
 	userService := service.(*UserService)
 	fmt.Println(userService.GetUser("123"))
+
+	// Get database component by interface
+	db, err := cc.GetComponentByInterface(reflect.TypeOf((*database.Database)(nil)).Elem())
+	if err != nil {
+		panic(err)
+	}
+
+	// Use database
+	database := db.(database.Database)
+	database.Connect()
+	fmt.Printf("Database connection: %s\n", database.GetConnectionString())
 }
