@@ -81,10 +81,57 @@ func (cc *ComponentContext) InitializeComponents() error {
 	}
 	cc.mu.RUnlock()
 
-	// Initialize each component
-	for typ, instance := range components {
-		if err := cc.injectDependencies(instance); err != nil {
-			return fmt.Errorf("failed to initialize component %v: %w", typ, err)
+	// Track initialized components
+	initialized := make(map[reflect.Type]bool)
+
+	// Initialize components until all are done or we can't make progress
+	for len(initialized) < len(components) {
+		progress := false
+
+		for typ, instance := range components {
+			if initialized[typ] {
+				continue
+			}
+
+			// Check if all dependencies are initialized
+			val := reflect.ValueOf(instance)
+			if val.Kind() != reflect.Ptr {
+				return fmt.Errorf("component must be a pointer: %v", typ)
+			}
+
+			elem := val.Elem()
+			if elem.Kind() != reflect.Struct {
+				return fmt.Errorf("component must be a pointer to a struct: %v", typ)
+			}
+
+			typ := elem.Type()
+			allDepsInitialized := true
+			for i := 0; i < typ.NumField(); i++ {
+				field := typ.Field(i)
+				if tag := field.Tag.Get("ctxboot"); tag == "inject" {
+					fieldType := field.Type
+					if fieldType.Kind() != reflect.Ptr {
+						fieldType = reflect.PtrTo(fieldType)
+					}
+
+					if _, exists := components[fieldType]; exists && !initialized[fieldType] {
+						allDepsInitialized = false
+						break
+					}
+				}
+			}
+
+			if allDepsInitialized {
+				if err := cc.injectDependencies(instance); err != nil {
+					return fmt.Errorf("failed to initialize component %v: %w", typ, err)
+				}
+				initialized[typ] = true
+				progress = true
+			}
+		}
+
+		if !progress {
+			return fmt.Errorf("circular dependency detected")
 		}
 	}
 
