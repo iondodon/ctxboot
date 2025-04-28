@@ -39,9 +39,35 @@ func (cc *ComponentContext) GetComponent(typ reflect.Type) (interface{}, error) 
 	cc.mu.RLock()
 	defer cc.mu.RUnlock()
 
+	// First try exact match
 	if component, ok := cc.components[typ]; ok {
 		return component, nil
 	}
+
+	// If the requested type is an interface, look for implementations
+	if typ.Kind() == reflect.Interface {
+		var candidates []reflect.Type
+		for t := range cc.components {
+			// Check if the component type implements the interface
+			if t.Implements(typ) {
+				candidates = append(candidates, t)
+			}
+		}
+
+		// If no candidates found, return error
+		if len(candidates) == 0 {
+			return nil, fmt.Errorf("no component found that implements interface: %v", typ)
+		}
+
+		// If multiple candidates found, panic
+		if len(candidates) > 1 {
+			panic(fmt.Sprintf("multiple components implement interface %v: %v", typ, candidates))
+		}
+
+		// Return the single candidate
+		return cc.components[candidates[0]], nil
+	}
+
 	return nil, fmt.Errorf("component not found: %v", typ)
 }
 
@@ -164,7 +190,25 @@ func (cc *ComponentContext) injectDependencies(target interface{}) error {
 			fieldType := field.Type
 			isPtrField := fieldType.Kind() == reflect.Ptr
 
-			// If field is not a pointer, we need to get the pointer type to look up the component
+			// For interface fields, use the interface type directly
+			if fieldType.Kind() == reflect.Interface {
+				component, err := cc.GetComponent(fieldType)
+				if err != nil {
+					return fmt.Errorf("failed to inject field %s: %w", field.Name, err)
+				}
+
+				fieldVal := elem.Field(i)
+				if !fieldVal.CanSet() {
+					// Handle unexported field
+					fieldVal = reflect.NewAt(field.Type, unsafe.Pointer(fieldVal.UnsafeAddr())).Elem()
+				}
+
+				// Set the value
+				fieldVal.Set(reflect.ValueOf(component))
+				continue
+			}
+
+			// For non-interface fields
 			lookupType := fieldType
 			if !isPtrField {
 				lookupType = reflect.PtrTo(fieldType)
