@@ -104,10 +104,9 @@ func (cc *ComponentContext) InitializeComponents() error {
 				return fmt.Errorf("component must be a pointer to a struct: %v", typ)
 			}
 
-			typ := elem.Type()
 			allDepsInitialized := true
-			for i := 0; i < typ.NumField(); i++ {
-				field := typ.Field(i)
+			for i := 0; i < elem.Type().NumField(); i++ {
+				field := elem.Type().Field(i)
 				if tag := field.Tag.Get("ctxboot"); tag == "inject" {
 					fieldType := field.Type
 					if fieldType.Kind() != reflect.Ptr {
@@ -131,7 +130,14 @@ func (cc *ComponentContext) InitializeComponents() error {
 		}
 
 		if !progress {
-			return fmt.Errorf("circular dependency detected")
+			// Find uninitialized components for error message
+			var uninitialized []string
+			for typ := range components {
+				if !initialized[typ] {
+					uninitialized = append(uninitialized, typ.String())
+				}
+			}
+			return fmt.Errorf("circular dependency detected among: %v", uninitialized)
 		}
 	}
 
