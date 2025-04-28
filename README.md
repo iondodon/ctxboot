@@ -158,3 +158,7 @@ func main() {
 ```
 
 Note: If you need to register custom components, do it before calling `LoadContext`. Components registered after `LoadContext` will not have their dependencies injected.
+
+### License
+
+Apache License Version 2.0, January 2004
