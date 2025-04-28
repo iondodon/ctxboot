@@ -74,13 +74,11 @@ CtxBoot follows these steps to manage your components:
    - Generates a `ctxboot.go` file with:
      - Import statements for all component packages
      - A `LoadContext` function that registers components
-     - Component registration in dependency order
 
 3. **Component Registration**
 
    - When `LoadContext` is called, it:
      - Registers each component with its type
-     - Stores components in a thread-safe map
      - Skips registration if a component of the same type already exists
 
 4. **Dependency Injection**
@@ -89,12 +87,10 @@ CtxBoot follows these steps to manage your components:
      - Processes components in dependency order
      - Injects dependencies by setting struct fields
      - Handles both pointer and non-pointer fields
-     - Detects and reports circular dependencies
 
 5. **Component Access**
    - Components can be retrieved using `GetComponent`
    - The framework maintains a single context instance
-   - All operations are thread-safe
 
 ## Usage
 
@@ -162,12 +158,3 @@ func main() {
 ```
 
 Note: If you need to register custom components, do it before calling `LoadContext`. Components registered after `LoadContext` will not have their dependencies injected.
-
-## Features
-
-- Automatic dependency injection
-- Component lifecycle management
-- Support for both pointer and non-pointer components
-- Thread-safe component context
-- Dependency order initialization
-- Circular dependency detection
