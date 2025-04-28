@@ -5,13 +5,20 @@ package main
 import (
 	"github.com/iondodon/ctxboot"
 	"reflect"
+	"log"
+	
 )
 
-func init() {
-	cc := ctxboot.Boot()
+// LoadContext registers and initializes all components
+func LoadContext(cc *ctxboot.ComponentContext) error {
+	// Register components in dependency order
 	
-	if err := cc.SetComponent(reflect.TypeOf(&UserService{}), &UserService{}); err != nil {
-		panic(err)
+	// Register UserService
+	if err := cc.SetComponent(reflect.TypeOf((*UserService)(nil)), &UserService{}); err != nil {
+		log.Fatalf("Failed to register component %s: %v", "UserService", err)
 	}
 	
+	
+	// Initialize all components after registration
+	return cc.InitializeComponents()
 }

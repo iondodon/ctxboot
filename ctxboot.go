@@ -55,6 +55,14 @@ func (cc *ComponentContext) SetComponent(typ reflect.Type, instance interface{})
 		return fmt.Errorf("instance type %v is not assignable to %v", reflect.TypeOf(instance), typ)
 	}
 
+	// Check if component already exists
+	cc.mu.RLock()
+	if _, exists := cc.components[typ]; exists {
+		cc.mu.RUnlock()
+		return nil // Skip if component already exists
+	}
+	cc.mu.RUnlock()
+
 	// Store the component
 	cc.mu.Lock()
 	cc.components[typ] = instance

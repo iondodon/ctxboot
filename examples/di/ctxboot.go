@@ -13,9 +13,8 @@ import (
 	
 )
 
-func init() {
-	cc := ctxboot.Boot()
-	
+// LoadContext registers and initializes all components
+func LoadContext(cc *ctxboot.ComponentContext) error {
 	// Register components in dependency order
 	
 	// Register database.Database
@@ -35,7 +34,5 @@ func init() {
 	
 	
 	// Initialize all components after registration
-	if err := cc.InitializeComponents(); err != nil {
-		log.Fatalf("Failed to initialize components: %v", err)
-	}
+	return cc.InitializeComponents()
 }

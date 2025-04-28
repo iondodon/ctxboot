@@ -27,13 +27,12 @@ type MyComponent struct {
 go run cmd/ctxboot/main.go ./path/to/your/package
 ```
 
-4. Initialize components in your main function:
+4. Load the context in your main function:
 
 ```go
 func main() {
-    // Initialize all components after registration
-    if err := ctxboot.Boot().InitializeComponents(); err != nil {
-        log.Fatalf("Failed to initialize components: %v", err)
+    if err := LoadContext(ctxboot.Boot()); err != nil {
+        log.Fatalf("Failed to load context: %v", err)
     }
 
     // Your application code...

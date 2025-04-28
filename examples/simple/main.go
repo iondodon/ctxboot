@@ -19,8 +19,14 @@ func (s *UserService) GetUser(id string) string {
 }
 
 func main() {
+	cc := ctxboot.Boot()
+	err := LoadContext(cc)
+	if err != nil {
+		panic(err)
+	}
+
 	// Get component
-	service, err := ctxboot.Boot().GetComponent(reflect.TypeOf(&UserService{}))
+	service, err := cc.GetComponent(reflect.TypeOf(&UserService{}))
 	if err != nil {
 		panic(err)
 	}

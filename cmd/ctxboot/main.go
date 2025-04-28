@@ -53,9 +53,8 @@ import (
 	{{end}}
 )
 
-func init() {
-	cc := ctxboot.Boot()
-	
+// LoadContext registers and initializes all components
+func LoadContext(cc *ctxboot.ComponentContext) error {
 	// Register components in dependency order
 	{{range .Components}}
 	// Register {{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}}
@@ -63,6 +62,9 @@ func init() {
 		log.Fatalf("Failed to register component %s: %v", "{{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}}", err)
 	}
 	{{end}}
+	
+	// Initialize all components after registration
+	return cc.InitializeComponents()
 }
 `
 
