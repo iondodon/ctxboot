@@ -16,6 +16,44 @@ Then you can run it from project root directory:
 ctxboot .
 ```
 
+## Component Registration
+
+CtxBoot supports registering components in two ways:
+
+1. Using the generated `RegisterComponent` method:
+
+```go
+// Register a pointer component
+config := &LoggerConfig{
+    Prefix: "APP: ",
+    Flags:  log.Ldate | log.Ltime,
+}
+if err := cc.RegisterComponent(config); err != nil {
+    log.Fatal(err)
+}
+
+// Register a non-pointer component (automatically converted to pointer)
+startTime := time.Now()
+if err := cc.RegisterComponent(startTime); err != nil {
+    log.Fatal(err)
+}
+```
+
+2. Using the lower-level `SetComponent` method:
+
+```go
+// Register with explicit type
+if err := cc.SetComponent(reflect.TypeOf((*LoggerConfig)(nil)), &LoggerConfig{}); err != nil {
+    log.Fatal(err)
+}
+```
+
+The framework automatically handles both pointer and non-pointer types:
+
+- If you register a non-pointer type but a pointer is expected, it will automatically create a pointer
+- If you register a pointer type, it will be used as-is
+- Nil components are not allowed and will return an error
+
 ## Generated Code
 
 The code generator creates a `ctxboot.go` file in your project. Here's what it contains:
@@ -29,6 +67,7 @@ import (
     "github.com/iondodon/ctxboot"
     "reflect"
     "log"
+    "fmt"
 
     // Import statements for all component packages
     "your/package/database"
@@ -39,6 +78,14 @@ import (
 // Context embeds ComponentContext and adds getter methods
 type Context struct {
     *ctxboot.ComponentContext
+}
+
+// RegisterComponent registers a component instance and automatically deduces its type
+func (cc *Context) RegisterComponent(instance interface{}) error {
+    if instance == nil {
+        return fmt.Errorf("cannot register nil component")
+    }
+    return cc.SetComponent(reflect.TypeOf(instance), instance)
 }
 
 // LoadContext registers and initializes all components and returns a Context
@@ -110,12 +157,15 @@ CtxBoot follows these steps to manage your components:
    - Generates a `ctxboot.go` file with:
      - Import statements for all component packages
      - A `LoadContext` function that registers components
+     - A `RegisterComponent` method for easy component registration
 
 3. **Component Registration**
 
    - When `LoadContext` is called, it:
      - Registers each component with its type
      - Skips registration if a component of the same type already exists
+   - Supports both pointer and non-pointer types
+   - Automatically converts non-pointer types to pointers when needed
 
 4. **Dependency Injection**
 
@@ -176,6 +226,12 @@ func main() {
         log.Fatalf("Failed to load context: %v", err)
     }
 
+    // Register additional components
+    startTime := time.Now()
+    if err := cc.RegisterComponent(startTime); err != nil {
+        log.Fatal(err)
+    }
+
     // Get a component instance using the generated getter method
     userService, err := cc.GetUserService()
     if err != nil {
@@ -192,6 +248,7 @@ The code generator automatically:
 1. Creates a `Context` type that embeds `ComponentContext`
 2. Generates getter methods for each component
 3. Provides a simplified `LoadContext()` function
+4. Adds a `RegisterComponent` method for easy component registration
 
 Benefits of the generated code:
 
@@ -200,6 +257,7 @@ Benefits of the generated code:
 - Better IDE support with autocompletion
 - Clearer error handling
 - Simplified API with single initialization call
+- Support for both pointer and non-pointer types
 
 ### Examples
 
