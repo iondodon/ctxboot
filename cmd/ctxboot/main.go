@@ -67,10 +67,13 @@ func (cc *Context) RegisterComponent(instance interface{}) error {
 	return cc.SetComponent(reflect.TypeOf(instance), instance)
 }
 
-// LoadContext registers and initializes all components and returns a Context
-func LoadContext() (*Context, error) {
-	cc := &Context{ctxboot.Boot()}
-	
+// InjectComponents initializes all registered components and their dependencies
+func (cc *Context) InjectComponents() error {
+	return cc.InitializeComponents()
+}
+
+// RegisterScanedComponenets registers all components
+func (cc *Context) RegisterScanedComponenets() error {
 	// Register components in dependency order
 	{{range .Components}}
 	// Register {{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}}
@@ -79,12 +82,12 @@ func LoadContext() (*Context, error) {
 	}
 	{{end}}
 	
-	// Initialize all components after registration
-	if err := cc.InitializeComponents(); err != nil {
-		return nil, err
-	}
-	
-	return cc, nil
+	return nil
+}
+
+// NewContext creates a new context
+func NewContext() *Context {
+	return &Context{ctxboot.Boot()}
 }
 
 // Component getter methods

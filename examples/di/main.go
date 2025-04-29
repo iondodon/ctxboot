@@ -18,8 +18,16 @@ func (s *UserService) GetUser(id string) string {
 }
 
 func main() {
-	cc, err := LoadContext()
-	if err != nil {
+	// Create a new context
+	cc := NewContext()
+
+	// Register components
+	if err := cc.RegisterScanedComponenets(); err != nil {
+		panic(err)
+	}
+
+	// Initialize components and their dependencies
+	if err := cc.InjectComponents(); err != nil {
 		panic(err)
 	}
 

@@ -27,8 +27,11 @@ type DatabaseConfig struct {
 }
 
 func main() {
-	cc, err := LoadContext()
-	if err != nil {
+	// Create a new context
+	cc := NewContext()
+
+	// Register components
+	if err := cc.RegisterScanedComponenets(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -53,8 +56,7 @@ func main() {
 
 	// Register a time.Time (non-pointer type)
 	startTime := time.Now()
-	startTimePtr := &startTime
-	if err := cc.RegisterComponent(startTimePtr); err != nil {
+	if err := cc.RegisterComponent(&startTime); err != nil {
 		log.Fatal(err)
 	}
 
@@ -70,8 +72,8 @@ func main() {
 		log.Fatal(err)
 	}
 
-	// Initialize all components
-	if err := cc.InitializeComponents(); err != nil {
+	// Initialize all components and their dependencies
+	if err := cc.InjectComponents(); err != nil {
 		log.Fatal(err)
 	}
 
