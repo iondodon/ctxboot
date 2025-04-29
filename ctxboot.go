@@ -80,15 +80,7 @@ func (c *CtxbootComponentContext) SetComponent(typ reflect.Type, instance interf
 		return fmt.Errorf("instance type %v is not assignable to %v", instanceType, typ)
 	}
 
-	// Check if component already exists
-	c.mu.RLock()
-	if _, exists := c.components[typ]; exists {
-		c.mu.RUnlock()
-		return nil // Skip if component already exists
-	}
-	c.mu.RUnlock()
-
-	// Store the component
+	// Store the component (overwriting if it exists)
 	c.mu.Lock()
 	c.components[typ] = instance
 	c.mu.Unlock()
