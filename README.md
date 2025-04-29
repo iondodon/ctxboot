@@ -36,8 +36,15 @@ import (
     "your/package/service"
 )
 
-// LoadContext registers and initializes all components
-func LoadContext(cc *ctxboot.ComponentContext) error {
+// Context embeds ComponentContext and adds getter methods
+type Context struct {
+    *ctxboot.ComponentContext
+}
+
+// LoadContext registers and initializes all components and returns a Context
+func LoadContext() (*Context, error) {
+    cc := &Context{ctxboot.Boot()}
+
     // Register components in dependency order
     // Database (no dependencies)
     if err := cc.SetComponent(reflect.TypeOf((*database.Database)(nil)), &database.Database{}); err != nil {
@@ -55,7 +62,36 @@ func LoadContext(cc *ctxboot.ComponentContext) error {
     }
 
     // Initialize all components after registration
-    return cc.InitializeComponents()
+    if err := cc.InitializeComponents(); err != nil {
+        return nil, err
+    }
+
+    return cc, nil
+}
+
+// Component getter methods
+func (cc *Context) GetDatabase() (*database.Database, error) {
+    component, err := cc.GetComponent(reflect.TypeOf((*database.Database)(nil)))
+    if err != nil {
+        return nil, err
+    }
+    return component.(*database.Database), nil
+}
+
+func (cc *Context) GetUserRepository() (*repository.UserRepository, error) {
+    component, err := cc.GetComponent(reflect.TypeOf((*repository.UserRepository)(nil)))
+    if err != nil {
+        return nil, err
+    }
+    return component.(*repository.UserRepository), nil
+}
+
+func (cc *Context) GetUserService() (*service.UserService, error) {
+    component, err := cc.GetComponent(reflect.TypeOf((*service.UserService)(nil)))
+    if err != nil {
+        return nil, err
+    }
+    return component.(*service.UserService), nil
 }
 ```
 
