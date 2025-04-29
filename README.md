@@ -11,6 +11,7 @@ Ctxboot is a lightweight dependency injection framework for Go that helps manage
 - Circular dependency detection
 - Thread-safe operations
 - Support for unexported fields
+- Component overriding (later registrations replace earlier ones)
 
 ## Components
 
@@ -21,6 +22,7 @@ The framework consists of two main components:
    - Core dependency injection container
    - Manages component registration and lifecycle
    - Handles dependency resolution and injection
+   - Supports component overriding
 
 2. **ComponentContext** (Generated)
    - Application-specific context
@@ -66,6 +68,12 @@ if err := ctx.RegisterScanedComponenets(); err != nil {
     log.Fatal(err)
 }
 
+// You can override components by registering them again
+customComponent := &MyComponent{/* ... */}
+if err := ctx.RegisterComponent(customComponent); err != nil {
+    log.Fatal(err)
+}
+
 // Initialize components and inject dependencies
 if err := ctx.InjectComponents(); err != nil {
     log.Fatal(err)
@@ -103,6 +111,12 @@ func main() {
         log.Fatal(err)
     }
 
+    // Override the default Database with a mock for testing
+    mockDB := &Database{/* mock implementation */}
+    if err := ctx.RegisterComponent(mockDB); err != nil {
+        log.Fatal(err)
+    }
+
     if err := ctx.InjectComponents(); err != nil {
         log.Fatal(err)
     }
@@ -128,6 +142,7 @@ func main() {
    - Keep dependency graphs shallow
    - Avoid circular dependencies
    - Use interfaces for better testability
+   - Be aware that later component registrations override earlier ones
 
 3. **Error Handling**
 
@@ -135,8 +150,15 @@ func main() {
    - Handle initialization failures gracefully
 
 4. **Thread Safety**
+
    - The framework is thread-safe
    - Components should be thread-safe if accessed concurrently
+
+5. **Component Overriding**
+   - Use component overriding for testing (replacing real components with mocks)
+   - Be careful with component overriding in production code
+   - Document when components are meant to be overridden
+   - Consider using interfaces to make component overriding more predictable
 
 ## License
 
