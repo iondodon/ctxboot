@@ -1,138 +1,143 @@
-# CtxBoot
+# Ctxboot
 
-A lightweight dependency injection framework for Go.
+Ctxboot is a lightweight dependency injection framework for Go that helps manage component lifecycle and dependencies.
 
-## Installation
+## Features
+
+- Automatic dependency injection
+- Component lifecycle management
+- Type-safe component access
+- Support for both interface and concrete type dependencies
+- Circular dependency detection
+- Thread-safe operations
+- Support for unexported fields
+
+## Components
+
+The framework consists of two main components:
+
+1. **CtxbootComponentContext** (Library)
+
+   - Core dependency injection container
+   - Manages component registration and lifecycle
+   - Handles dependency resolution and injection
+
+2. **ComponentContext** (Generated)
+   - Application-specific context
+   - Embeds CtxbootComponentContext
+   - Provides type-safe getter methods for components
+   - Adds application-specific functionality
+
+## Usage
+
+### 1. Define Components
+
+Mark your components with the `ctxboot:component` annotation:
+
+```go
+// ctxboot:component
+type MyComponent struct {
+    Dependency *OtherComponent `ctxboot:"inject"`
+}
+```
+
+### 2. Generate Code
+
+Run the code generator:
 
 ```bash
-go install github.com/iondodon/ctxboot/cmd/ctxboot@latest
+go run cmd/ctxboot/main.go <package-dir>
+```
+
+This will generate a `ctxboot.go` file with:
+
+- Component registration code
+- Type-safe getter methods
+- Context initialization code
+
+### 3. Use in Your Application
+
+```go
+// Create a new context
+ctx := NewComponentContext()
+
+// Register components
+if err := ctx.RegisterScanedComponenets(); err != nil {
+    log.Fatal(err)
+}
+
+// Initialize components and inject dependencies
+if err := ctx.InjectComponents(); err != nil {
+    log.Fatal(err)
+}
+
+// Get components
+myComp, err := ctx.GetMyComponent()
+if err != nil {
+    log.Fatal(err)
+}
 ```
 
 ## Example
 
-Here's a comprehensive example that demonstrates all key features of CtxBoot:
-
 ```go
-// Define custom components (not scanned)
-type LoggerConfig struct {
-    Prefix string
-    Flags  int
-}
-
-type DatabaseConfig struct {
-    Host     string
-    Port     int
-    Username string
-    Password string
-}
-
-// Define scanned components
-//ctxboot:component
+// ctxboot:component
 type Database struct {
-    Config *DatabaseConfig `ctxboot:"inject"`
+    Config *Config `ctxboot:"inject"`
 }
 
-//ctxboot:component
-type UserRepository struct {
-    DB     *Database      `ctxboot:"inject"`
-    Logger *LoggerConfig  `ctxboot:"inject"`
+// ctxboot:component
+type Config struct {
+    // configuration fields
 }
 
-//ctxboot:component
-type UserService struct {
-    Repo   *UserRepository `ctxboot:"inject"`
-    Logger *LoggerConfig   `ctxboot:"inject"`
+// ctxboot:component
+type Service struct {
+    DB *Database `ctxboot:"inject"`
 }
 
 func main() {
-    // Create a new context
-    cc := NewContext()
+    ctx := NewComponentContext()
 
-    // Register custom components first
-    loggerConfig := &LoggerConfig{
-        Prefix: "APP: ",
-        Flags:  log.Ldate | log.Ltime,
-    }
-    if err := cc.RegisterComponent(loggerConfig); err != nil {
+    if err := ctx.RegisterScanedComponenets(); err != nil {
         log.Fatal(err)
     }
 
-    dbConfig := &DatabaseConfig{
-        Host:     "localhost",
-        Port:     5432,
-        Username: "postgres",
-        Password: "secret",
-    }
-    if err := cc.RegisterComponent(dbConfig); err != nil {
+    if err := ctx.InjectComponents(); err != nil {
         log.Fatal(err)
     }
 
-    // Then register scanned components
-    if err := cc.RegisterScanedComponenets(); err != nil {
-        log.Fatal(err)
-    }
-
-    // Initialize components and their dependencies
-    if err := cc.InjectComponents(); err != nil {
-        log.Fatal(err)
-    }
-
-    // Get components using generated getter methods (only for scanned components)
-    userService, err := cc.GetUserService()
+    service, err := ctx.GetService()
     if err != nil {
         log.Fatal(err)
     }
 
-    // Get components by type (works for both scanned and non-scanned components)
-    logger, err := cc.GetComponent(reflect.TypeOf((*LoggerConfig)(nil)))
-    if err != nil {
-        log.Fatal(err)
-    }
-    loggerConfig := logger.(*LoggerConfig)
-
-    // Get scanned components by type (alternative to generated getters)
-    db, err := cc.GetComponent(reflect.TypeOf((*Database)(nil)))
-    if err != nil {
-        log.Fatal(err)
-    }
-    database := db.(*Database)
-
-    // Use the components
-    user, err := userService.GetUser("123")
-    if err != nil {
-        log.Fatal(err)
-    }
-    fmt.Printf("User: %+v\n", user)
+    // Use the service...
 }
 ```
 
-This example demonstrates:
+## Best Practices
 
-1. **Component Definition**
+1. **Component Naming**
 
-   - Custom components without `//ctxboot:component` annotation
-   - Scanned components with `//ctxboot:component` annotation
-   - Dependency injection using `ctxboot:"inject"` tag
+   - Use clear, descriptive names for components
+   - Components must be exported (start with capital letter)
 
-2. **Component Registration**
+2. **Dependency Management**
 
-   - Manual registration of custom components using `RegisterComponent`
-   - Automatic registration of scanned components using `RegisterScanedComponenets`
-   - Proper order of registration (custom components first)
+   - Keep dependency graphs shallow
+   - Avoid circular dependencies
+   - Use interfaces for better testability
 
-3. **Dependency Injection**
+3. **Error Handling**
 
-   - Automatic injection of both custom and scanned components
-   - Support for pointer and non-pointer types
-   - Dependency resolution in correct order
+   - Always check errors from context operations
+   - Handle initialization failures gracefully
 
-4. **Component Access**
-   - Type-safe access using generated getter methods (only for scanned components)
-   - Generic access using `GetComponent` (works for all components)
-   - Error handling for missing components
-
-Note: Only components marked with `//ctxboot:component` will have generated getter methods. For components without this annotation, you must use `GetComponent` to retrieve them.
+4. **Thread Safety**
+   - The framework is thread-safe
+   - Components should be thread-safe if accessed concurrently
 
 ## License
 
-Apache License Version 2.0, January 2004
+MIT License

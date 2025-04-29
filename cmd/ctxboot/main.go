@@ -54,30 +54,30 @@ import (
 	{{end}}
 )
 
-// Context embeds ComponentContext and adds getter methods
-type Context struct {
-	*ctxboot.ComponentContext
+// ComponentContext embeds CtxbootComponentContext and adds getter methods
+type ComponentContext struct {
+	*ctxboot.CtxbootComponentContext
 }
 
 // RegisterComponent registers a component instance and automatically deduces its type
-func (cc *Context) RegisterComponent(instance interface{}) error {
+func (c *ComponentContext) RegisterComponent(instance interface{}) error {
 	if instance == nil {
 		return fmt.Errorf("cannot register nil component")
 	}
-	return cc.SetComponent(reflect.TypeOf(instance), instance)
+	return c.SetComponent(reflect.TypeOf(instance), instance)
 }
 
 // InjectComponents initializes all registered components and their dependencies
-func (cc *Context) InjectComponents() error {
-	return cc.InitializeComponents()
+func (c *ComponentContext) InjectComponents() error {
+	return c.InitializeComponents()
 }
 
 // RegisterScanedComponenets registers all components
-func (cc *Context) RegisterScanedComponenets() error {
+func (c *ComponentContext) RegisterScanedComponenets() error {
 	// Register components in dependency order
 	{{range .Components}}
 	// Register {{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}}
-	if err := cc.SetComponent(reflect.TypeOf((*{{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}})(nil)), &{{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}}{}); err != nil {
+	if err := c.SetComponent(reflect.TypeOf((*{{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}})(nil)), &{{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}}{}); err != nil {
 		log.Fatalf("Failed to register component %s: %v", "{{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}}", err)
 	}
 	{{end}}
@@ -85,16 +85,16 @@ func (cc *Context) RegisterScanedComponenets() error {
 	return nil
 }
 
-// NewContext creates a new context
-func NewContext() *Context {
-	return &Context{ctxboot.Boot()}
+// NewComponentContext creates a new component context instance
+func NewComponentContext() *ComponentContext {
+	return &ComponentContext{ctxboot.NewCtxbootComponentContext()}
 }
 
 // Component getter methods
 {{range .Components}}
 // Get{{.Name}} returns the {{.Name}} component
-func (cc *Context) Get{{.Name}}() (*{{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}}, error) {
-	component, err := cc.GetComponent(reflect.TypeOf((*{{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}})(nil)))
+func (c *ComponentContext) Get{{.Name}}() (*{{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}}, error) {
+	component, err := c.GetComponent(reflect.TypeOf((*{{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}})(nil)))
 	if err != nil {
 		return nil, err
 	}

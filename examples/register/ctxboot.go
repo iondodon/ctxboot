@@ -10,35 +10,35 @@ import (
 	
 )
 
-// Context embeds ComponentContext and adds getter methods
-type Context struct {
-	*ctxboot.ComponentContext
+// ComponentContext embeds CtxbootComponentContext and adds getter methods
+type ComponentContext struct {
+	*ctxboot.CtxbootComponentContext
 }
 
 // RegisterComponent registers a component instance and automatically deduces its type
-func (cc *Context) RegisterComponent(instance interface{}) error {
+func (c *ComponentContext) RegisterComponent(instance interface{}) error {
 	if instance == nil {
 		return fmt.Errorf("cannot register nil component")
 	}
-	return cc.SetComponent(reflect.TypeOf(instance), instance)
+	return c.SetComponent(reflect.TypeOf(instance), instance)
 }
 
 // InjectComponents initializes all registered components and their dependencies
-func (cc *Context) InjectComponents() error {
-	return cc.InitializeComponents()
+func (c *ComponentContext) InjectComponents() error {
+	return c.InitializeComponents()
 }
 
 // RegisterScanedComponenets registers all components
-func (cc *Context) RegisterScanedComponenets() error {
+func (c *ComponentContext) RegisterScanedComponenets() error {
 	// Register components in dependency order
 	
 	// Register LoggerConfig
-	if err := cc.SetComponent(reflect.TypeOf((*LoggerConfig)(nil)), &LoggerConfig{}); err != nil {
+	if err := c.SetComponent(reflect.TypeOf((*LoggerConfig)(nil)), &LoggerConfig{}); err != nil {
 		log.Fatalf("Failed to register component %s: %v", "LoggerConfig", err)
 	}
 	
 	// Register DatabaseConfig
-	if err := cc.SetComponent(reflect.TypeOf((*DatabaseConfig)(nil)), &DatabaseConfig{}); err != nil {
+	if err := c.SetComponent(reflect.TypeOf((*DatabaseConfig)(nil)), &DatabaseConfig{}); err != nil {
 		log.Fatalf("Failed to register component %s: %v", "DatabaseConfig", err)
 	}
 	
@@ -46,16 +46,16 @@ func (cc *Context) RegisterScanedComponenets() error {
 	return nil
 }
 
-// NewContext creates a new context
-func NewContext() *Context {
-	return &Context{ctxboot.Boot()}
+// NewComponentContext creates a new component context instance
+func NewComponentContext() *ComponentContext {
+	return &ComponentContext{ctxboot.NewCtxbootComponentContext()}
 }
 
 // Component getter methods
 
 // GetLoggerConfig returns the LoggerConfig component
-func (cc *Context) GetLoggerConfig() (*LoggerConfig, error) {
-	component, err := cc.GetComponent(reflect.TypeOf((*LoggerConfig)(nil)))
+func (c *ComponentContext) GetLoggerConfig() (*LoggerConfig, error) {
+	component, err := c.GetComponent(reflect.TypeOf((*LoggerConfig)(nil)))
 	if err != nil {
 		return nil, err
 	}
@@ -63,8 +63,8 @@ func (cc *Context) GetLoggerConfig() (*LoggerConfig, error) {
 }
 
 // GetDatabaseConfig returns the DatabaseConfig component
-func (cc *Context) GetDatabaseConfig() (*DatabaseConfig, error) {
-	component, err := cc.GetComponent(reflect.TypeOf((*DatabaseConfig)(nil)))
+func (c *ComponentContext) GetDatabaseConfig() (*DatabaseConfig, error) {
+	component, err := c.GetComponent(reflect.TypeOf((*DatabaseConfig)(nil)))
 	if err != nil {
 		return nil, err
 	}

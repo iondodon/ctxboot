@@ -28,7 +28,7 @@ type DatabaseConfig struct {
 
 func main() {
 	// Create a new context
-	cc := NewContext()
+	cc := NewComponentContext()
 
 	// Register components
 	if err := cc.RegisterScanedComponenets(); err != nil {

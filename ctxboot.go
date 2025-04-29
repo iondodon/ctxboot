@@ -8,46 +8,33 @@ import (
 	"unsafe"
 )
 
-var (
-	defaultContext *ComponentContext
-	once           sync.Once
-)
-
-// Boot returns the default component context
-func Boot() *ComponentContext {
-	once.Do(func() {
-		defaultContext = NewComponentContext()
-	})
-	return defaultContext
-}
-
-// ComponentContext manages components and their dependencies
-type ComponentContext struct {
+// CtxbootComponentContext manages components and their dependencies
+type CtxbootComponentContext struct {
 	components map[reflect.Type]interface{}
 	mu         sync.RWMutex
 }
 
-// NewComponentContext creates a new component context
-func NewComponentContext() *ComponentContext {
-	return &ComponentContext{
+// NewCtxbootComponentContext creates a new component context
+func NewCtxbootComponentContext() *CtxbootComponentContext {
+	return &CtxbootComponentContext{
 		components: make(map[reflect.Type]interface{}),
 	}
 }
 
 // GetComponent retrieves a component by its type
-func (cc *ComponentContext) GetComponent(typ reflect.Type) (interface{}, error) {
-	cc.mu.RLock()
-	defer cc.mu.RUnlock()
+func (c *CtxbootComponentContext) GetComponent(typ reflect.Type) (interface{}, error) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 
 	// First try exact match
-	if component, ok := cc.components[typ]; ok {
+	if component, ok := c.components[typ]; ok {
 		return component, nil
 	}
 
 	// If the requested type is an interface, look for implementations
 	if typ.Kind() == reflect.Interface {
 		var candidates []reflect.Type
-		for t := range cc.components {
+		for t := range c.components {
 			// Check if the component type implements the interface
 			if t.Implements(typ) {
 				candidates = append(candidates, t)
@@ -65,14 +52,14 @@ func (cc *ComponentContext) GetComponent(typ reflect.Type) (interface{}, error) 
 		}
 
 		// Return the single candidate
-		return cc.components[candidates[0]], nil
+		return c.components[candidates[0]], nil
 	}
 
 	return nil, fmt.Errorf("component not found: %v", typ)
 }
 
 // SetComponent stores a component instance
-func (cc *ComponentContext) SetComponent(typ reflect.Type, instance interface{}) error {
+func (c *CtxbootComponentContext) SetComponent(typ reflect.Type, instance interface{}) error {
 	if instance == nil {
 		return errors.New("cannot store nil component")
 	}
@@ -94,30 +81,30 @@ func (cc *ComponentContext) SetComponent(typ reflect.Type, instance interface{})
 	}
 
 	// Check if component already exists
-	cc.mu.RLock()
-	if _, exists := cc.components[typ]; exists {
-		cc.mu.RUnlock()
+	c.mu.RLock()
+	if _, exists := c.components[typ]; exists {
+		c.mu.RUnlock()
 		return nil // Skip if component already exists
 	}
-	cc.mu.RUnlock()
+	c.mu.RUnlock()
 
 	// Store the component
-	cc.mu.Lock()
-	cc.components[typ] = instance
-	cc.mu.Unlock()
+	c.mu.Lock()
+	c.components[typ] = instance
+	c.mu.Unlock()
 
 	return nil
 }
 
 // InitializeComponents injects dependencies into all registered components
-func (cc *ComponentContext) InitializeComponents() error {
+func (c *CtxbootComponentContext) InitializeComponents() error {
 	// Create a copy of components to avoid concurrent modification
 	components := make(map[reflect.Type]interface{})
-	cc.mu.RLock()
-	for typ, comp := range cc.components {
+	c.mu.RLock()
+	for typ, comp := range c.components {
 		components[typ] = comp
 	}
-	cc.mu.RUnlock()
+	c.mu.RUnlock()
 
 	// Track initialized components
 	initialized := make(map[reflect.Type]bool)
@@ -159,7 +146,7 @@ func (cc *ComponentContext) InitializeComponents() error {
 			}
 
 			if allDepsInitialized {
-				if err := cc.injectDependencies(instance); err != nil {
+				if err := c.injectDependencies(instance); err != nil {
 					return fmt.Errorf("failed to initialize component %v: %w", typ, err)
 				}
 				initialized[typ] = true
@@ -183,7 +170,7 @@ func (cc *ComponentContext) InitializeComponents() error {
 }
 
 // injectDependencies injects dependencies into a component
-func (cc *ComponentContext) injectDependencies(target interface{}) error {
+func (c *CtxbootComponentContext) injectDependencies(target interface{}) error {
 	val := reflect.ValueOf(target)
 	if val.Kind() != reflect.Ptr {
 		return fmt.Errorf("target must be a pointer")
@@ -204,7 +191,7 @@ func (cc *ComponentContext) injectDependencies(target interface{}) error {
 
 			// For interface fields, use the interface type directly
 			if fieldType.Kind() == reflect.Interface {
-				component, err := cc.GetComponent(fieldType)
+				component, err := c.GetComponent(fieldType)
 				if err != nil {
 					return fmt.Errorf("failed to inject field %s: %w", field.Name, err)
 				}
@@ -226,7 +213,7 @@ func (cc *ComponentContext) injectDependencies(target interface{}) error {
 				lookupType = reflect.PtrTo(fieldType)
 			}
 
-			component, err := cc.GetComponent(lookupType)
+			component, err := c.GetComponent(lookupType)
 			if err != nil {
 				return fmt.Errorf("failed to inject field %s: %w", field.Name, err)
 			}

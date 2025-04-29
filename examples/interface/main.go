@@ -21,7 +21,7 @@ func (g *EnglishGreeter) Greet() string {
 
 func main() {
 	// Create a new context
-	cc := NewContext()
+	cc := NewComponentContext()
 
 	// Register components
 	if err := cc.RegisterScanedComponenets(); err != nil {

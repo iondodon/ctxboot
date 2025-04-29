@@ -17,7 +17,7 @@ func (s *UserService) GetUser(id string) string {
 
 func main() {
 	// Create a new context
-	cc := NewContext()
+	cc := NewComponentContext()
 
 	// Register components
 	if err := cc.RegisterScanedComponenets(); err != nil {
