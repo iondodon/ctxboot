@@ -134,26 +134,112 @@ import (
 )
 
 func main() {
-    // Register custom components before loading context
-    cc := ctxboot.Boot()
-    if err := cc.SetComponent(reflect.TypeOf((*CustomComponent)(nil)), &CustomComponent{}); err != nil {
-        log.Fatalf("Failed to register custom component: %v", err)
-    }
-
-    // Load and initialize all components
-    if err := LoadContext(cc); err != nil {
+    // Load context and get enhanced context with getter methods
+    cc, err := LoadContext()
+    if err != nil {
         log.Fatalf("Failed to load context: %v", err)
     }
 
-    // Get a component instance
-    service, err := cc.GetComponent(reflect.TypeOf((*UserService)(nil)))
+    // Get a component instance using the generated getter method
+    userService, err := cc.GetUserService()
     if err != nil {
         log.Fatalf("Failed to get service: %v", err)
     }
 
     // Use the component
-    userService := service.(*UserService)
     // ... use userService
+}
+```
+
+The code generator automatically:
+
+1. Creates a `Context` type that embeds `ComponentContext`
+2. Generates getter methods for each component
+3. Provides a simplified `LoadContext()` function
+
+Benefits of the generated code:
+
+- Type safety: Components are returned with the correct type
+- No need for type assertions in your code
+- Better IDE support with autocompletion
+- Clearer error handling
+- Simplified API with single initialization call
+
+### Examples
+
+#### Simple Example
+
+```go
+//ctxboot:component
+type UserService struct {
+    // Add fields as needed
+}
+
+func main() {
+    cc, err := LoadContext()
+    if err != nil {
+        panic(err)
+    }
+
+    userService, err := cc.GetUserService()
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println(userService.GetUser("123"))
+}
+```
+
+#### Dependency Injection Example
+
+```go
+//ctxboot:component
+type UserService struct {
+    Repo *UserRepository `ctxboot:"inject"`
+}
+
+func main() {
+    cc, err := LoadContext()
+    if err != nil {
+        panic(err)
+    }
+
+    userService, err := cc.GetUserService()
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println(userService.GetUser("123"))
+}
+```
+
+#### Interface-Based Example
+
+```go
+type Greeter interface {
+    Greet() string
+}
+
+//ctxboot:component
+type EnglishGreeter struct{}
+
+func main() {
+    cc, err := LoadContext()
+    if err != nil {
+        panic(err)
+    }
+
+    // Get by interface
+    greeter, err := cc.GetComponent(reflect.TypeOf((*Greeter)(nil)).Elem())
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println(greeter.(Greeter).Greet())
+
+    // Or use generated getter
+    englishGreeter, err := cc.GetEnglishGreeter()
+    if err != nil {
+        panic(err)
+    }
+    fmt.Println(englishGreeter.Greet())
 }
 ```
 

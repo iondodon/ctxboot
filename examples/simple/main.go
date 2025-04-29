@@ -2,9 +2,6 @@ package main
 
 import (
 	"fmt"
-	"reflect"
-
-	"github.com/iondodon/ctxboot"
 )
 
 // UserService handles user-related operations
@@ -19,19 +16,17 @@ func (s *UserService) GetUser(id string) string {
 }
 
 func main() {
-	cc := ctxboot.Boot()
-	err := LoadContext(cc)
+	cc, err := LoadContext()
 	if err != nil {
 		panic(err)
 	}
 
-	// Get component
-	service, err := cc.GetComponent(reflect.TypeOf(&UserService{}))
+	// Get component using the generated getter method
+	userService, err := cc.GetUserService()
 	if err != nil {
 		panic(err)
 	}
 
 	// Use component
-	userService := service.(*UserService)
 	fmt.Println(userService.GetUser("123"))
 }

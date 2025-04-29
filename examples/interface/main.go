@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 	"reflect"
-
-	"github.com/iondodon/ctxboot"
 )
 
 // Define an interface
@@ -22,19 +20,25 @@ func (g *EnglishGreeter) Greet() string {
 }
 
 func main() {
-	cc := ctxboot.Boot()
-	err := LoadContext(cc)
+	cc, err := LoadContext()
 	if err != nil {
 		panic(err)
 	}
 
-	// Get component by interface type
+	// Example 1: Get component by interface type
 	greeter, err := cc.GetComponent(reflect.TypeOf((*Greeter)(nil)).Elem())
 	if err != nil {
 		panic(err)
 	}
-
-	// Use the component
 	g := greeter.(Greeter)
+	fmt.Println("Example 1 - Get by interface:")
 	fmt.Println(g.Greet())
+
+	// Example 2: Get component using generated getter method
+	englishGreeter, err := cc.GetEnglishGreeter()
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println("Example 2 - Get by generated getter:")
+	fmt.Println(englishGreeter.Greet())
 }

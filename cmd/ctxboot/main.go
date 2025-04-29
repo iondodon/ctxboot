@@ -53,8 +53,15 @@ import (
 	{{end}}
 )
 
-// LoadContext registers and initializes all components
-func LoadContext(cc *ctxboot.ComponentContext) error {
+// Context embeds ComponentContext and adds getter methods
+type Context struct {
+	*ctxboot.ComponentContext
+}
+
+// LoadContext registers and initializes all components and returns a Context
+func LoadContext() (*Context, error) {
+	cc := &Context{ctxboot.Boot()}
+	
 	// Register components in dependency order
 	{{range .Components}}
 	// Register {{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}}
@@ -64,8 +71,24 @@ func LoadContext(cc *ctxboot.ComponentContext) error {
 	{{end}}
 	
 	// Initialize all components after registration
-	return cc.InitializeComponents()
+	if err := cc.InitializeComponents(); err != nil {
+		return nil, err
+	}
+	
+	return cc, nil
 }
+
+// Component getter methods
+{{range .Components}}
+// Get{{.Name}} returns the {{.Name}} component
+func (cc *Context) Get{{.Name}}() (*{{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}}, error) {
+	component, err := cc.GetComponent(reflect.TypeOf((*{{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}})(nil)))
+	if err != nil {
+		return nil, err
+	}
+	return component.(*{{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}}), nil
+}
+{{end}}
 `
 
 // Find module root by looking for go.mod

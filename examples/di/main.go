@@ -2,9 +2,7 @@ package main
 
 import (
 	"fmt"
-	"reflect"
 
-	"github.com/iondodon/ctxboot"
 	"github.com/iondodon/ctxboot/examples/di/repository"
 )
 
@@ -20,19 +18,18 @@ func (s *UserService) GetUser(id string) string {
 }
 
 func main() {
-	cc := ctxboot.Boot()
-	err := LoadContext(cc)
+	cc, err := LoadContext()
 	if err != nil {
 		panic(err)
 	}
 
-	// Example 1: Get component by concrete type
-	service, err := cc.GetComponent(reflect.TypeOf(&UserService{}))
+	// Get component using the generated getter method
+	userService, err := cc.GetUserService()
 	if err != nil {
 		panic(err)
 	}
-	userService := service.(*UserService)
-	fmt.Println("Example 1 - Get by concrete type:")
+
+	// Use component
+	fmt.Println("Example - Get by generated getter method:")
 	fmt.Println(userService.GetUser("123"))
-
 }

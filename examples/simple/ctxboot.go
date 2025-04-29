@@ -9,8 +9,15 @@ import (
 	
 )
 
-// LoadContext registers and initializes all components
-func LoadContext(cc *ctxboot.ComponentContext) error {
+// Context embeds ComponentContext and adds getter methods
+type Context struct {
+	*ctxboot.ComponentContext
+}
+
+// LoadContext registers and initializes all components and returns a Context
+func LoadContext() (*Context, error) {
+	cc := &Context{ctxboot.Boot()}
+	
 	// Register components in dependency order
 	
 	// Register UserService
@@ -20,5 +27,21 @@ func LoadContext(cc *ctxboot.ComponentContext) error {
 	
 	
 	// Initialize all components after registration
-	return cc.InitializeComponents()
+	if err := cc.InitializeComponents(); err != nil {
+		return nil, err
+	}
+	
+	return cc, nil
 }
+
+// Component getter methods
+
+// GetUserService returns the UserService component
+func (cc *Context) GetUserService() (*UserService, error) {
+	component, err := cc.GetComponent(reflect.TypeOf((*UserService)(nil)))
+	if err != nil {
+		return nil, err
+	}
+	return component.(*UserService), nil
+}
+
