@@ -157,7 +157,45 @@ func main() {
 }
 ```
 
-Note: If you need to register custom components, do it before calling `LoadContext`. Components registered after `LoadContext` will not have their dependencies injected.
+### 4. Interface-Based Component Retrieval
+
+CtxBoot supports retrieving components by their interface type. This is useful for dependency injection based on interfaces and plugin architectures.
+
+```go
+// Define an interface
+type Greeter interface {
+    Greet() string
+}
+
+// Implement the interface
+//ctxboot:component
+type EnglishGreeter struct{}
+
+func (g *EnglishGreeter) Greet() string {
+    return "Hello!"
+}
+
+// Get component by interface type
+greeter, err := cc.GetComponent(reflect.TypeOf((*Greeter)(nil)).Elem())
+if err != nil {
+    panic(err)
+}
+
+// Use the component
+g := greeter.(Greeter)
+fmt.Println(g.Greet())
+```
+
+Important notes about interface-based retrieval:
+
+- If multiple components implement the same interface, the framework will panic (to avoid ambiguity)
+- If no component implements the interface, you'll get an error
+- The component is returned as `interface{}`, so you need to type assert it to your interface type
+- This feature is particularly useful for:
+  - Dependency injection based on interfaces
+  - Plugin architectures
+  - Service abstractions
+  - Testing (easy implementation swapping)
 
 ### License
 
