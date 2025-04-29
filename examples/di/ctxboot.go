@@ -6,6 +6,7 @@ import (
 	"github.com/iondodon/ctxboot"
 	"reflect"
 	"log"
+	"fmt"
 	
 	database "github.com/iondodon/ctxboot/examples/di/database"
 	
@@ -16,6 +17,14 @@ import (
 // Context embeds ComponentContext and adds getter methods
 type Context struct {
 	*ctxboot.ComponentContext
+}
+
+// RegisterComponent registers a component instance and automatically deduces its type
+func (cc *Context) RegisterComponent(instance interface{}) error {
+	if instance == nil {
+		return fmt.Errorf("cannot register nil component")
+	}
+	return cc.SetComponent(reflect.TypeOf(instance), instance)
 }
 
 // LoadContext registers and initializes all components and returns a Context

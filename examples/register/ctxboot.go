@@ -29,9 +29,14 @@ func LoadContext() (*Context, error) {
 	
 	// Register components in dependency order
 	
-	// Register UserService
-	if err := cc.SetComponent(reflect.TypeOf((*UserService)(nil)), &UserService{}); err != nil {
-		log.Fatalf("Failed to register component %s: %v", "UserService", err)
+	// Register LoggerConfig
+	if err := cc.SetComponent(reflect.TypeOf((*LoggerConfig)(nil)), &LoggerConfig{}); err != nil {
+		log.Fatalf("Failed to register component %s: %v", "LoggerConfig", err)
+	}
+	
+	// Register DatabaseConfig
+	if err := cc.SetComponent(reflect.TypeOf((*DatabaseConfig)(nil)), &DatabaseConfig{}); err != nil {
+		log.Fatalf("Failed to register component %s: %v", "DatabaseConfig", err)
 	}
 	
 	
@@ -45,12 +50,21 @@ func LoadContext() (*Context, error) {
 
 // Component getter methods
 
-// GetUserService returns the UserService component
-func (cc *Context) GetUserService() (*UserService, error) {
-	component, err := cc.GetComponent(reflect.TypeOf((*UserService)(nil)))
+// GetLoggerConfig returns the LoggerConfig component
+func (cc *Context) GetLoggerConfig() (*LoggerConfig, error) {
+	component, err := cc.GetComponent(reflect.TypeOf((*LoggerConfig)(nil)))
 	if err != nil {
 		return nil, err
 	}
-	return component.(*UserService), nil
+	return component.(*LoggerConfig), nil
+}
+
+// GetDatabaseConfig returns the DatabaseConfig component
+func (cc *Context) GetDatabaseConfig() (*DatabaseConfig, error) {
+	component, err := cc.GetComponent(reflect.TypeOf((*DatabaseConfig)(nil)))
+	if err != nil {
+		return nil, err
+	}
+	return component.(*DatabaseConfig), nil
 }
 

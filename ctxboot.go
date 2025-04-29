@@ -77,8 +77,20 @@ func (cc *ComponentContext) SetComponent(typ reflect.Type, instance interface{})
 		return errors.New("cannot store nil component")
 	}
 
-	if !reflect.TypeOf(instance).AssignableTo(typ) {
-		return fmt.Errorf("instance type %v is not assignable to %v", reflect.TypeOf(instance), typ)
+	// Get the actual type of the instance
+	instanceType := reflect.TypeOf(instance)
+
+	// If typ is a pointer type but instance is not, create a pointer to instance
+	if typ.Kind() == reflect.Ptr && instanceType.Kind() != reflect.Ptr {
+		// Create a new pointer to the instance
+		ptr := reflect.New(instanceType)
+		ptr.Elem().Set(reflect.ValueOf(instance))
+		instance = ptr.Interface()
+		instanceType = reflect.TypeOf(instance)
+	}
+
+	if !instanceType.AssignableTo(typ) {
+		return fmt.Errorf("instance type %v is not assignable to %v", instanceType, typ)
 	}
 
 	// Check if component already exists
