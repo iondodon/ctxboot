@@ -14,40 +14,40 @@ import (
 	
 )
 
-// Context embeds ComponentContext and adds getter methods
-type Context struct {
-	*ctxboot.ComponentContext
+// ComponentContext embeds CtxbootComponentContext and adds getter methods
+type ComponentContext struct {
+	*ctxboot.CtxbootComponentContext
 }
 
 // RegisterComponent registers a component instance and automatically deduces its type
-func (cc *Context) RegisterComponent(instance interface{}) error {
+func (c *ComponentContext) RegisterComponent(instance interface{}) error {
 	if instance == nil {
 		return fmt.Errorf("cannot register nil component")
 	}
-	return cc.SetComponent(reflect.TypeOf(instance), instance)
+	return c.SetComponent(reflect.TypeOf(instance), instance)
 }
 
 // InjectComponents initializes all registered components and their dependencies
-func (cc *Context) InjectComponents() error {
-	return cc.InitializeComponents()
+func (c *ComponentContext) InjectComponents() error {
+	return c.InitializeComponents()
 }
 
 // RegisterScanedComponenets registers all components
-func (cc *Context) RegisterScanedComponenets() error {
+func (c *ComponentContext) RegisterScanedComponenets() error {
 	// Register components in dependency order
 	
 	// Register database.DatabaseImpl
-	if err := cc.SetComponent(reflect.TypeOf((*database.DatabaseImpl)(nil)), &database.DatabaseImpl{}); err != nil {
+	if err := c.SetComponent(reflect.TypeOf((*database.DatabaseImpl)(nil)), &database.DatabaseImpl{}); err != nil {
 		log.Fatalf("Failed to register component %s: %v", "database.DatabaseImpl", err)
 	}
 	
 	// Register UserService
-	if err := cc.SetComponent(reflect.TypeOf((*UserService)(nil)), &UserService{}); err != nil {
+	if err := c.SetComponent(reflect.TypeOf((*UserService)(nil)), &UserService{}); err != nil {
 		log.Fatalf("Failed to register component %s: %v", "UserService", err)
 	}
 	
 	// Register repository.UserRepository
-	if err := cc.SetComponent(reflect.TypeOf((*repository.UserRepository)(nil)), &repository.UserRepository{}); err != nil {
+	if err := c.SetComponent(reflect.TypeOf((*repository.UserRepository)(nil)), &repository.UserRepository{}); err != nil {
 		log.Fatalf("Failed to register component %s: %v", "repository.UserRepository", err)
 	}
 	
@@ -55,16 +55,16 @@ func (cc *Context) RegisterScanedComponenets() error {
 	return nil
 }
 
-// NewContext creates a new context
-func NewContext() *Context {
-	return &Context{ctxboot.Boot()}
+// NewComponentContext creates a new component context instance
+func NewComponentContext() *ComponentContext {
+	return &ComponentContext{ctxboot.NewCtxbootComponentContext()}
 }
 
 // Component getter methods
 
 // GetDatabaseImpl returns the DatabaseImpl component
-func (cc *Context) GetDatabaseImpl() (*database.DatabaseImpl, error) {
-	component, err := cc.GetComponent(reflect.TypeOf((*database.DatabaseImpl)(nil)))
+func (c *ComponentContext) GetDatabaseImpl() (*database.DatabaseImpl, error) {
+	component, err := c.GetComponent(reflect.TypeOf((*database.DatabaseImpl)(nil)))
 	if err != nil {
 		return nil, err
 	}
@@ -72,8 +72,8 @@ func (cc *Context) GetDatabaseImpl() (*database.DatabaseImpl, error) {
 }
 
 // GetUserService returns the UserService component
-func (cc *Context) GetUserService() (*UserService, error) {
-	component, err := cc.GetComponent(reflect.TypeOf((*UserService)(nil)))
+func (c *ComponentContext) GetUserService() (*UserService, error) {
+	component, err := c.GetComponent(reflect.TypeOf((*UserService)(nil)))
 	if err != nil {
 		return nil, err
 	}
@@ -81,8 +81,8 @@ func (cc *Context) GetUserService() (*UserService, error) {
 }
 
 // GetUserRepository returns the UserRepository component
-func (cc *Context) GetUserRepository() (*repository.UserRepository, error) {
-	component, err := cc.GetComponent(reflect.TypeOf((*repository.UserRepository)(nil)))
+func (c *ComponentContext) GetUserRepository() (*repository.UserRepository, error) {
+	component, err := c.GetComponent(reflect.TypeOf((*repository.UserRepository)(nil)))
 	if err != nil {
 		return nil, err
 	}
