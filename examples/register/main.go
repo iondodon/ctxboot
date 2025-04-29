@@ -30,11 +30,6 @@ func main() {
 	// Create a new context
 	cc := NewComponentContext()
 
-	// Register components
-	if err := cc.RegisterScanedComponenets(); err != nil {
-		log.Fatal(err)
-	}
-
 	// Register a LoggerConfig
 	config := &LoggerConfig{
 		Prefix: "APP: ",
@@ -73,7 +68,7 @@ func main() {
 	}
 
 	// Initialize all components and their dependencies
-	if err := cc.InjectComponents(); err != nil {
+	if err := cc.InitializeComponents(); err != nil {
 		log.Fatal(err)
 	}
 

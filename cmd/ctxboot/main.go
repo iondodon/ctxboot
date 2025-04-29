@@ -67,13 +67,8 @@ func (c *ComponentContext) RegisterComponent(instance interface{}) error {
 	return c.SetComponent(reflect.TypeOf(instance), instance)
 }
 
-// InjectComponents initializes all registered components and their dependencies
-func (c *ComponentContext) InjectComponents() error {
-	return c.InitializeComponents()
-}
-
-// RegisterScanedComponenets registers all components
-func (c *ComponentContext) RegisterScanedComponenets() error {
+// registerScanedComponenets registers all components
+func (c *ComponentContext) registerScanedComponenets() error {
 	// Register components in dependency order
 	{{range .Components}}
 	// Register {{if ne .Package "main"}}{{if .Alias}}{{.Alias}}.{{else}}{{.Package}}.{{end}}{{end}}{{.Name}}
@@ -85,9 +80,13 @@ func (c *ComponentContext) RegisterScanedComponenets() error {
 	return nil
 }
 
-// NewComponentContext creates a new component context instance
+// NewComponentContext creates a new component context instance and registers all scanned components
 func NewComponentContext() *ComponentContext {
-	return &ComponentContext{ctxboot.NewCtxbootComponentContext()}
+	ctx := &ComponentContext{ctxboot.NewCtxbootComponentContext()}
+	if err := ctx.registerScanedComponenets(); err != nil {
+		log.Fatalf("Failed to register scanned components: %v", err)
+	}
+	return ctx
 }
 
 // Component getter methods

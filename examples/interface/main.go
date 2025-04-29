@@ -23,13 +23,8 @@ func main() {
 	// Create a new context
 	cc := NewComponentContext()
 
-	// Register components
-	if err := cc.RegisterScanedComponenets(); err != nil {
-		panic(err)
-	}
-
 	// Initialize components and their dependencies
-	if err := cc.InjectComponents(); err != nil {
+	if err := cc.InitializeComponents(); err != nil {
 		panic(err)
 	}
 

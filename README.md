@@ -12,6 +12,7 @@ Ctxboot is a lightweight dependency injection framework for Go that helps manage
 - Thread-safe operations
 - Support for unexported fields
 - Component overriding (later registrations replace earlier ones)
+- Automatic component registration
 
 ## Components
 
@@ -29,6 +30,7 @@ The framework consists of two main components:
    - Embeds CtxbootComponentContext
    - Provides type-safe getter methods for components
    - Adds application-specific functionality
+   - Automatically registers scanned components on creation
 
 ## Usage
 
@@ -60,13 +62,8 @@ This will generate a `ctxboot.go` file with:
 ### 3. Use in Your Application
 
 ```go
-// Create a new context
+// Create a new context (automatically registers scanned components)
 ctx := NewComponentContext()
-
-// Register components
-if err := ctx.RegisterScanedComponenets(); err != nil {
-    log.Fatal(err)
-}
 
 // You can override components by registering them again
 customComponent := &MyComponent{/* ... */}
@@ -75,7 +72,7 @@ if err := ctx.RegisterComponent(customComponent); err != nil {
 }
 
 // Initialize components and inject dependencies
-if err := ctx.InjectComponents(); err != nil {
+if err := ctx.InitializeComponents(); err != nil {
     log.Fatal(err)
 }
 
@@ -105,11 +102,8 @@ type Service struct {
 }
 
 func main() {
+    // Create context (automatically registers all scanned components)
     ctx := NewComponentContext()
-
-    if err := ctx.RegisterScanedComponenets(); err != nil {
-        log.Fatal(err)
-    }
 
     // Override the default Database with a mock for testing
     mockDB := &Database{/* mock implementation */}
@@ -117,7 +111,7 @@ func main() {
         log.Fatal(err)
     }
 
-    if err := ctx.InjectComponents(); err != nil {
+    if err := ctx.InitializeComponents(); err != nil {
         log.Fatal(err)
     }
 
