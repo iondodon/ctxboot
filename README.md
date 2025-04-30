@@ -76,7 +76,6 @@ type Database struct {
     Config *Config `ctxboot:"inject"`
 }
 
-//ctxboot:component
 type Config struct {
     // configuration fields
 }
