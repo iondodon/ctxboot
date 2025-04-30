@@ -90,9 +90,8 @@ func main() {
     // Create context (automatically registers all scanned components)
     ctx := NewComponentContext()
 
-    // Override the default Database with a mock for testing
-    mockDB := &Database{/* mock implementation */}
-    if err := ctx.RegisterComponent(mockDB); err != nil {
+    config := &Config{/* configuration */}
+    if err := ctx.RegisterComponent(config); err != nil {
         log.Fatal(err)
     }
 
