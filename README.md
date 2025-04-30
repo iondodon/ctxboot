@@ -47,22 +47,22 @@ This will generate a `ctxboot.go` file with:
 
 ```go
 // Create a new context (automatically registers scanned components)
-ctx := NewComponentContext()
+cc := NewComponentContext()
 
 // REgister custom configured components
 // with RegisterComponent you can override existing components
 customComponent := &MyComponent{/* custom cinfigureation */}
-if err := ctx.RegisterComponent(customComponent); err != nil {
+if err := cc.RegisterComponent(customComponent); err != nil {
     log.Fatal(err)
 }
 
 // Initialize components and inject dependencies
-if err := ctx.InitializeComponents(); err != nil {
+if err := cc.InitializeComponents(); err != nil {
     log.Fatal(err)
 }
 
 // Get components
-myComp, err := ctx.GetMyComponent()
+myComp, err := cc.GetMyComponent()
 if err != nil {
     log.Fatal(err)
 }
@@ -87,18 +87,18 @@ type Service struct {
 
 func main() {
     // Create context (automatically registers all scanned components)
-    ctx := NewComponentContext()
+    cc := NewComponentContext()
 
     config := &Config{/* configuration */}
-    if err := ctx.RegisterComponent(config); err != nil {
+    if err := cc.RegisterComponent(config); err != nil {
         log.Fatal(err)
     }
 
-    if err := ctx.InitializeComponents(); err != nil {
+    if err := cc.InitializeComponents(); err != nil {
         log.Fatal(err)
     }
 
-    service, err := ctx.GetService()
+    service, err := cc.GetService()
     if err != nil {
         log.Fatal(err)
     }
