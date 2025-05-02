@@ -1,6 +1,6 @@
 # Ctxboot
 
-Ctxboot is a lightweight dependency injection library for Go that helps manage component dependencies.
+Ctxboot is a dependency injection library for Go that helps manage component dependencies.
 
 See [https://github.com/iondodon/ctxboot/tree/main/examples](https://github.com/iondodon/ctxboot/tree/main/examples)
 
